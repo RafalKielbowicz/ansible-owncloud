@@ -1,0 +1,36 @@
+---
+- hosts: ownCloud_nodes
+  become: yes
+  tasks:
+    - name: "install httpd"
+      yum:
+        name: httpd
+        state: latest
+    - name: "install php and extensions"
+      yum:
+        name: "{{item}}"
+        state: latest
+      with_items:
+        - php-xml
+        - php
+        - php-zip
+        - php-mbstring
+        - php-mysql
+        - php-gd
+    - name: "get the owncloud"
+      get_url: url=https://download.owncloud.org/community/owncloud-9.0.1.tar.bz2 dest=/var/www/html
+    - name: "extract the owncloud"
+      unarchive: src=/var/www/html/owncloud-9.0.1.tar.bz2 dest=/var/www/ copy=no owner=apache
+    - name: "restart apache"
+      service:
+        name: httpd
+        state: restarted
+    - name: "set the apache config"
+      template: src=templates/owncloud.conf dest=/etc/httpd/conf.d/owncloud.conf
+    - name: "restart apache"
+      service:
+        name: httpd
+        state: restarted
+
+
+
