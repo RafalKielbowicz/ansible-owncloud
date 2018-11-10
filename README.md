@@ -1,1 +1,1 @@
-ansible-owncloud-automation
+About ownCloud: https://owncloud.org/
