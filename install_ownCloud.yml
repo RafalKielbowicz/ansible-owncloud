@@ -1,6 +1,10 @@
 ---
 - hosts: ownCloud_nodes
   become: yes
+  vars:
+    owncloud_db_name: ownCloud_raf
+    owncloud_db_username: db_raf
+    owncloud_db_password: "superStrongPassword"
   tasks:
     - name: "install httpd"
       yum:
@@ -21,16 +25,37 @@
       get_url: url=https://download.owncloud.org/community/owncloud-9.0.1.tar.bz2 dest=/var/www/html
     - name: "extract the owncloud"
       unarchive: src=/var/www/html/owncloud-9.0.1.tar.bz2 dest=/var/www/ copy=no owner=apache
-    - name: "restart apache"
-      service:
-        name: httpd
-        state: restarted
     - name: "set the apache config"
       template: src=templates/owncloud.conf dest=/etc/httpd/conf.d/owncloud.conf
     - name: "restart apache"
       service:
         name: httpd
         state: restarted
+    - name: "install db server"
+      yum:
+        name: "{{item}}"
+        state: latest
+      with_items:
+        - mariadb
+        - mariadb-server
+        - MySQL-python
+    - name: "restart mariadb"
+      service:
+        name: mariadb
+        state: restarted
+    - name: "create ownCloud database"
+      mysql_db:
+        name: "{{owncloud_db_name}}"
+        state: present
+    - name: "create ownCloud database user"
+      mysql_user:
+        name: "{{owncloud_db_username}}"
+        password: "{{owncloud_db_password}}"
+        priv: '*.*:ALL'
+    - name: "configure ownCloud"
+      template:
+        src: "./templates/config.php"
+        dest: "/var/www/config.php"
 
 
 
